@@ -14,12 +14,12 @@ export class AuthController {
   /* POST: /auth/login */
   @Post('login')
   login() {
-    return 'logged in';
+    return this.authService.login();
   }
 
   /* POST: /auth/signup */
   @Post('signup')
   signup() {
-    return 'Created new account';
+    return this.authService.signup();
   }
 }
