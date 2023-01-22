@@ -16,15 +16,14 @@ export class AuthController {
   /* we don't use login(@Req req: Request) because of compatibility with Fastify */
   @Post('login')
   login(@Body() dto: AuthDto) {
-    console.log({
-      dto,
-    });
+    console.log({ dto });
     return this.authService.login();
   }
 
   /* POST: /auth/signup */
   @Post('signup')
-  signup() {
+  signup(@Body() dto: AuthDto) {
+    console.log({ dto });
     return this.authService.signup();
   }
 }
