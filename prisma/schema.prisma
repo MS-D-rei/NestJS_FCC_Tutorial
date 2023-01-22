@@ -1,6 +1,10 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
+// for @map, @@map
+// https://www.prisma.io/docs/concepts/components/prisma-client/working-with-prismaclient/use-custom-model-and-field-names
+// You can "rename" fields and models that are used in the Prisma Client by mapping them to the "original" names in the database using the @map and @@map attributes. 
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -18,6 +22,10 @@ model User {
   password  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  
+  bookmarks Bookmark[]
+
+  @@map("users")
 }
 
 model Bookmark {
@@ -27,4 +35,9 @@ model Bookmark {
   link        String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  userId      Int
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("bookmarks")
 }
