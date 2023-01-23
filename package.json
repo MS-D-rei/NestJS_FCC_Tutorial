@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "prisma:dev:deploy": "primsa migrate deploy",
+    "prisma:dev:deploy": "npx primsa migrate deploy",
     "db:dev:down": "docker compose down -v",
     "db:dev:up": "docker compose up -d mysql",
     "db:dev:restart": "npm run db:dev:down && npm run db:dev:up && sleep 1 && primsa:dev:deploy",
