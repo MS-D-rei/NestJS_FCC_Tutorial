@@ -111,7 +111,24 @@ describe('App e2e', () => {
   });
   describe('User', () => {
     describe('Get me', () => {
-      it.todo('should get current user info');
+      it('200 current user info when valid Authorization token', () => {
+        return pactum
+          .spec()
+          .get('/users/me')
+          .withHeaders({
+            Authorization: `Bearer $S{userAccessToken}`,
+          })
+          .expectStatus(200);
+      });
+      it('401 if invalid Authorization token', () => {
+        return pactum
+          .spec()
+          .get('/users/me')
+          .withHeaders({
+            Authorization: '',
+          })
+          .expectStatus(401);
+      });
     });
     describe('Edit user', () => {
       it.todo('should change user info');
