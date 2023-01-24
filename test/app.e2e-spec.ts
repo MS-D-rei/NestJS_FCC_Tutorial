@@ -1,6 +1,7 @@
 import { AppController } from '@/app.controller';
 import { AppService } from '@/app.service';
 import { AuthModule } from '@/auth/auth.module';
+import { AuthDto } from '@/auth/dto';
 import { BookmarkModule } from '@/bookmark/bookmark.module';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { PrismaService } from '@/prisma/prisma.service';
@@ -8,6 +9,7 @@ import { UserModule } from '@/user/user.module';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
+import * as pactum from 'pactum';
 
 describe('App e2e', () => {
   let app: INestApplication;
@@ -30,10 +32,13 @@ describe('App e2e', () => {
     app = moduleRef.createNestApplication();
     app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
     await app.init();
+    await app.listen(4001);
 
     // delete all data in test DB
     prisma = app.get(PrismaService);
     await prisma.cleanDB();
+
+    pactum.request.setBaseUrl('http://localhost:4001');
   });
 
   afterAll(() => {
@@ -41,11 +46,49 @@ describe('App e2e', () => {
   });
 
   describe('Auth', () => {
+    const dto: AuthDto = {
+      email: 'test@gmail.com',
+      password: 'Password',
+    };
     describe('Signup', () => {
-      it.todo('should signup');
+      it('201 when valid email and password', () => {
+        return pactum
+          .spec()
+          .post('/auth/signup')
+          .withBody(dto)
+          .expectStatus(201);
+        // .inspect(); can show content of response
+      });
+      it('400 when email empty', () => {
+        return pactum
+          .spec()
+          .post('/auth/signup')
+          .withBody({ email: '', password: 'Password' })
+          .expectStatus(400);
+      });
+      it('400 when password empty', () => {
+        return pactum
+          .spec()
+          .post('/auth/signup')
+          .withBody({ email: 'valid@gmail.com', password: '' })
+          .expectStatus(400);
+      });
+      it('403 if email is not unique', () => {
+        return pactum
+          .spec()
+          .post('/auth/signup')
+          .withBody(dto)
+          .expectStatus(403);
+      });
     });
     describe('Login', () => {
-      it.todo('should login');
+      it('should login', () => {
+        return pactum
+          .spec()
+          .post('/auth/login')
+          .withBody(dto)
+          .expectStatus(200);
+      });
     });
   });
   describe('User', () => {
