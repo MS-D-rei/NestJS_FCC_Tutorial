@@ -3,13 +3,17 @@ import { AppService } from '@/app.service';
 import { AuthModule } from '@/auth/auth.module';
 import { BookmarkModule } from '@/bookmark/bookmark.module';
 import { PrismaModule } from '@/prisma/prisma.module';
+import { PrismaService } from '@/prisma/prisma.service';
 import { UserModule } from '@/user/user.module';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 
 describe('App e2e', () => {
-  beforeEach(async () => {
+  let app: INestApplication;
+  let prisma: PrismaService;
+
+  beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
       imports: [
         ConfigModule.forRoot({ isGlobal: true }),
@@ -21,9 +25,19 @@ describe('App e2e', () => {
       controllers: [AppController],
       providers: [AppService],
     }).compile();
-    const app: INestApplication = moduleRef.createNestApplication();
+
+    // init app
+    app = moduleRef.createNestApplication();
     app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
     await app.init();
+
+    // delete all data in test DB
+    prisma = app.get(PrismaService);
+    await prisma.cleanDB();
+  });
+
+  afterAll(() => {
+    app.close();
   });
 
   it('should pass', () => {
