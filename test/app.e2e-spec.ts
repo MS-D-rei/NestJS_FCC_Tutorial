@@ -59,14 +59,14 @@ describe('App e2e', () => {
           .expectStatus(201);
         // .inspect(); can show content of response
       });
-      it('400 when email empty', () => {
+      it('400 if email empty', () => {
         return pactum
           .spec()
           .post('/auth/signup')
           .withBody({ email: '', password: 'Password' })
           .expectStatus(400);
       });
-      it('400 when password empty', () => {
+      it('400 if password empty', () => {
         return pactum
           .spec()
           .post('/auth/signup')
@@ -82,12 +82,30 @@ describe('App e2e', () => {
       });
     });
     describe('Login', () => {
-      it('should login', () => {
+      it('200 when valid email and password', () => {
         return pactum
           .spec()
           .post('/auth/login')
           .withBody(dto)
-          .expectStatus(200);
+          .expectStatus(200)
+          .stores('userAccessToken', 'access_token');
+      });
+      it('400 if email empty', () => {
+        return pactum
+          .spec()
+          .post('/auth/login')
+          .withBody({ email: '', password: 'Password' })
+          .expectStatus(400);
+      });
+      it('400 if password empty', () => {
+        return pactum
+          .spec()
+          .post('/auth/login')
+          .withBody({ email: 'valid@gmail.com', password: '' })
+          .expectStatus(400);
+      });
+      it('400 if no body', () => {
+        return pactum.spec().post('/auth/login').expectStatus(400);
       });
     });
   });
