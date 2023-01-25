@@ -5,6 +5,7 @@ import { AuthDto } from '@/auth/dto';
 import { BookmarkModule } from '@/bookmark/bookmark.module';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { PrismaService } from '@/prisma/prisma.service';
+import { EditUserDto } from '@/user/dto';
 import { UserModule } from '@/user/user.module';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
@@ -47,7 +48,9 @@ describe('App e2e', () => {
 
   describe('Auth', () => {
     const dto: AuthDto = {
-      email: 'test@gmail.com',
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john@gmail.com',
       password: 'Password',
     };
     describe('Signup', () => {
@@ -63,14 +66,14 @@ describe('App e2e', () => {
         return pactum
           .spec()
           .post('/auth/signup')
-          .withBody({ email: '', password: 'Password' })
+          .withBody({ ...dto, email: '' })
           .expectStatus(400);
       });
       it('400 if password empty', () => {
         return pactum
           .spec()
           .post('/auth/signup')
-          .withBody({ email: 'valid@gmail.com', password: '' })
+          .withBody({ ...dto, email: 'valid@gmail.com', password: '' })
           .expectStatus(400);
       });
       it('403 if email is not unique', () => {
@@ -101,7 +104,7 @@ describe('App e2e', () => {
         return pactum
           .spec()
           .post('/auth/login')
-          .withBody({ email: 'valid@gmail.com', password: '' })
+          .withBody({ email: 'john@gmail.com', password: '' })
           .expectStatus(400);
       });
       it('400 if no body', () => {
@@ -131,7 +134,43 @@ describe('App e2e', () => {
       });
     });
     describe('Edit user', () => {
-      it.todo('should change user info');
+      const editUserDto: EditUserDto = {
+        firstName: 'Taro',
+        lastName: 'Tanaka',
+        email: 'tanaka@gmail.com',
+        password: 'Password2',
+      };
+      it('200 update all user info', () => {
+        return pactum
+          .spec()
+          .patch('/users')
+          .withHeaders({
+            Authorization: `Bearer $S{userAccessToken}`,
+          })
+          .withBody(editUserDto)
+          .expectStatus(200)
+          .expectBodyContains(editUserDto.firstName)
+          .expectBodyContains(editUserDto.email);
+      });
+      it('200 update only email', () => {
+        return pactum
+          .spec()
+          .patch('/users')
+          .withHeaders({
+            Authorization: `Bearer $S{userAccessToken}`,
+          })
+          .withBody({ email: 'edited@gmail.com' })
+          .expectStatus(200)
+          .expectBodyContains('edited@gmail.com');
+      });
+      it('200 update only password', () => {
+        return pactum
+          .spec()
+          .patch('/users')
+          .withHeaders({ Authorization: `Bearer $S{userAccessToken}` })
+          .withBody({ password: 'editedPassword' })
+          .expectStatus(200);
+      });
     });
   });
   describe('Bookmark', () => {
