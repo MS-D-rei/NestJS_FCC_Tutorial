@@ -3,6 +3,7 @@ import { AppService } from '@/app.service';
 import { AuthModule } from '@/auth/auth.module';
 import { AuthDto } from '@/auth/dto';
 import { BookmarkModule } from '@/bookmark/bookmark.module';
+import { CreateBookmarkDto, EditBookmarkDto } from '@/bookmark/dto';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { PrismaService } from '@/prisma/prisma.service';
 import { EditUserDto } from '@/user/dto';
@@ -174,20 +175,88 @@ describe('App e2e', () => {
     });
   });
   describe('Bookmark', () => {
+    describe('Get empty bookmarks', () => {
+      it('200 should get empty bookmarks', () => {
+        return pactum
+          .spec()
+          .get('/bookmarks')
+          .withHeaders({ Authorization: `Bearer $S{userAccessToken}` })
+          .expectStatus(200)
+          .expectBody([]);
+      });
+    });
     describe('Create new bookmark', () => {
-      it.todo('new bookmark saved to DB');
+      const createBookmarkDto: CreateBookmarkDto = {
+        title: 'First Bookmark',
+        description: 'free code camp nestjs tutorial',
+        link: 'https://youtu.be/GHTA143_b-s',
+      };
+      it('201 new bookmark saved to DB', () => {
+        return pactum
+          .spec()
+          .post('/bookmarks')
+          .withHeaders({ Authorization: `Bearer $S{userAccessToken}` })
+          .withBody(createBookmarkDto)
+          .expectStatus(201)
+          .stores('bookmarkId', 'id');
+      });
     });
     describe('Get bookmarks', () => {
-      it.todo('get all bookmarks');
+      it('200 get all bookmarks', () => {
+        return pactum
+          .spec()
+          .get('/bookmarks')
+          .withHeaders({ Authorization: `Bearer $S{userAccessToken}` })
+          .expectStatus(200)
+          .expectJsonLength(1);
+      });
     });
     describe('Get bookmark by id', () => {
-      it.todo('get the bookmark');
+      it('200 get the bookmark', () => {
+        return pactum
+          .spec()
+          .get('/bookmarks/{id}')
+          .withPathParams('id', `$S{bookmarkId}`)
+          .withHeaders({ Authorization: `Bearer $S{userAccessToken}` })
+          .expectStatus(200)
+          .expectBodyContains(`$S{bookmarkId}`);
+      });
     });
     describe('Edit bookmark', () => {
-      it.todo('change the bookmark data and saved it to DB');
+      const editBookmarkDto: EditBookmarkDto = {
+        title: 'Edited Bookmark',
+        description: 'ChatGPT Clone – OpenAI API and React Tutorial',
+        link: 'https://youtu.be/98bGwOYoEGg',
+      };
+      it('200 edit bookmark', () => {
+        return pactum
+          .spec()
+          .patch('/bookmarks/{id}')
+          .withPathParams('id', `$S{bookmarkId}`)
+          .withHeaders({ Authorization: `Bearer $S{userAccessToken}` })
+          .withBody(editBookmarkDto)
+          .expectStatus(200)
+          .expectBodyContains(editBookmarkDto.title);
+      });
     });
     describe('Delete bookmark', () => {
-      it.todo('delete the bookmark from DB');
+      it('204 delete bookmark', () => {
+        return pactum
+          .spec()
+          .delete('/bookmarks/{id}')
+          .withPathParams('id', `$S{bookmarkId}`)
+          .withHeaders({ Authorization: `Bearer $S{userAccessToken}` })
+          .expectStatus(204);
+      });
+      it('200 should get empty bookmark', () => {
+        return pactum
+          .spec()
+          .get('/bookmarks/{id}')
+          .withPathParams('id', `$S{bookmarkId}`)
+          .withHeaders({ Authorization: `Bearer $S{userAccessToken}` })
+          .expectStatus(200)
+          .expectBody('');
+      });
     });
   });
 });
