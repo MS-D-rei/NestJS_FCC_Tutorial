@@ -1,7 +1,7 @@
 import { AppController } from '@/app.controller';
 import { AppService } from '@/app.service';
 import { AuthModule } from '@/auth/auth.module';
-import { AuthDto } from '@/auth/dto';
+import { SignupDto } from '@/auth/dto';
 import { BookmarkModule } from '@/bookmark/bookmark.module';
 import { CreateBookmarkDto, EditBookmarkDto } from '@/bookmark/dto';
 import { PrismaModule } from '@/prisma/prisma.module';
@@ -48,7 +48,7 @@ describe('App e2e', () => {
   });
 
   describe('Auth', () => {
-    const dto: AuthDto = {
+    const dto: SignupDto = {
       firstName: 'John',
       lastName: 'Doe',
       email: 'john@gmail.com',
