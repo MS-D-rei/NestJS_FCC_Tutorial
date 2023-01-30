@@ -122,4 +122,20 @@ export class AuthService {
       throw err;
     }
   }
+
+  async logout(userId: number) {
+    /* Filter conditions and operators */
+    /* https://www.prisma.io/docs/reference/api-reference/prisma-client-reference#filter-conditions-and-operators */
+    await this.prismaService.user.updateMany({
+      where: {
+        id: userId,
+        refresh_token: {
+          not: null,
+        },
+      },
+      data: {
+        refresh_token: null,
+      },
+    });
+  }
 }
