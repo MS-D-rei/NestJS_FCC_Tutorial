@@ -1,4 +1,10 @@
 export interface IJwtPayload {
-  sub: string;
+  sub: number;
   email: string;
+}
+
+export interface IJwtPayloadWithRefreshToken {
+  sub: number;
+  email: string;
+  refresh_token: string;
 }
