@@ -5,6 +5,7 @@ import { AuthDto } from '@/auth/dto';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { Tokens } from '@/auth/types';
 
 @Injectable()
 export class AuthService {
@@ -14,6 +15,7 @@ export class AuthService {
     private configService: ConfigService,
   ) {}
 
+  /* this is for access token only auth */
   async signToken(
     userId: number,
     email: string,
@@ -29,6 +31,40 @@ export class AuthService {
     return {
       access_token: token,
     };
+  }
+
+  /* for access token and refresh token combination */
+  async getTokens(userId: number, email: string): Promise<Tokens> {
+    const payload = {
+      sub: userId,
+      email,
+    };
+    const [accessToken, refreshToken] = await Promise.all([
+      this.jwtService.signAsync(payload, {
+        expiresIn: '15m',
+        secret: this.configService.get('JWT_SECRET_ACCESS'),
+      }),
+      this.jwtService.signAsync(payload, {
+        expiresIn: 60 * 60 * 24 * 7, // 1 week
+        secret: this.configService.get('JWT_SECRET_REFRESH'),
+      }),
+    ]);
+    return {
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    };
+  }
+
+  async updateRefreshTokenToUser(userId: number, refreshToken: string) {
+    const hash = await argon2.hash(refreshToken);
+    await this.prismaService.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        refresh_token: hash,
+      },
+    });
   }
 
   async login(dto: AuthDto) {
@@ -47,7 +83,6 @@ export class AuthService {
     if (!pwMatches) throw new ForbiddenException('Credential incorrect');
 
     /* send the user */
-    // delete user.password;
     return this.signToken(user.id, user.email);
   }
 
@@ -57,17 +92,21 @@ export class AuthService {
     /* save the new user in DB */
     try {
       // don't forget to add await
-      const user = await this.prismaService.user.create({
+      const newUser = await this.prismaService.user.create({
         data: {
-          firstName: 'John',
-          lastName: 'Doe',
+          firstName: dto.firstName,
+          lastName: dto.lastName,
           email: dto.email,
           password: hash,
         },
       });
-      /* return the saved user */
-      // delete user.password;
-      return this.signToken(user.id, user.email);
+
+      /* this is for access token only auth */
+      // return this.signToken(user.id, user.email);
+
+      const tokens = await this.getTokens(newUser.id, newUser.email);
+      await this.updateRefreshTokenToUser(newUser.id, tokens.refresh_token);
+      return tokens;
     } catch (err) {
       /* error handling */
       // https://www.prisma.io/docs/concepts/components/prisma-client/handling-exceptions-and-errors
