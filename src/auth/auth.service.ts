@@ -1,7 +1,7 @@
 import { PrismaService } from '@/prisma/prisma.service';
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import * as argon2 from 'argon2';
-import { AuthDto } from '@/auth/dto';
+import { LoginDto, SignupDto } from '@/auth/dto';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -67,7 +67,7 @@ export class AuthService {
     });
   }
 
-  async login(dto: AuthDto) {
+  async login(dto: LoginDto): Promise<Tokens> {
     /* find user by email */
     /* if not exist, throw exception */
     const user = await this.prismaService.user.findUnique({
@@ -82,11 +82,15 @@ export class AuthService {
     const pwMatches = await argon2.verify(user.password, dto.password);
     if (!pwMatches) throw new ForbiddenException('Credential incorrect');
 
-    /* send the user */
-    return this.signToken(user.id, user.email);
+    /* this is for access token only auth */
+    // return this.signToken(user.id, user.email);
+
+    const tokens = await this.getTokens(user.id, user.email);
+    await this.updateRefreshTokenToUser(user.id, tokens.refresh_token);
+    return tokens;
   }
 
-  async signup(dto: AuthDto) {
+  async signup(dto: SignupDto) {
     /* generate password */
     const hash = await argon2.hash(dto.password);
     /* save the new user in DB */
