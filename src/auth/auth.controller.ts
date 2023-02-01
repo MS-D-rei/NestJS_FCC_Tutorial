@@ -9,8 +9,8 @@ import {
 import { AuthService } from '@/auth/auth.service';
 import { LoginDto, SignupDto } from '@/auth/dto';
 import { IJwtPayloadWithRefreshToken, Tokens } from '@/auth/types';
-import { GetUser } from '@/auth/decorator';
-import { JwtAccessTokenGuard, JwtRefreshTokenGuard } from '@/auth/guard';
+import { GetUser, Public } from '@/auth/decorator';
+import { JwtRefreshTokenGuard } from '@/auth/guard';
 
 @Controller('auth')
 export class AuthController {
@@ -24,6 +24,7 @@ export class AuthController {
 
   /* POST: /auth/login */
   /* we don't use login(@Req req: Request) because of compatibility with Fastify */
+  @Public()
   @HttpCode(HttpStatus.OK)
   @Post('login')
   login(@Body() dto: LoginDto): Promise<Tokens> {
@@ -31,18 +32,21 @@ export class AuthController {
   }
 
   /* POST: /auth/signup */
+  @Public()
   @Post('signup')
   signup(@Body() dto: SignupDto): Promise<Tokens> {
     return this.authService.signup(dto);
   }
 
-  @UseGuards(JwtAccessTokenGuard)
+  /* POST: /auth/logout */
+  // @UseGuards(JwtAccessTokenGuard) // this is set as global in main.ts
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   logout(@GetUser('sub') userId: number) {
     return this.authService.logout(userId);
   }
 
+  /* POST: /auth/refresh */
   @UseGuards(JwtRefreshTokenGuard)
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
