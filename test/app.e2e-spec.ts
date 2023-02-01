@@ -2,6 +2,7 @@ import { AppController } from '@/app.controller';
 import { AppService } from '@/app.service';
 import { AuthModule } from '@/auth/auth.module';
 import { SignupDto } from '@/auth/dto';
+import { JwtAccessTokenGuard } from '@/auth/guard';
 import { BookmarkModule } from '@/bookmark/bookmark.module';
 import { CreateBookmarkDto, EditBookmarkDto } from '@/bookmark/dto';
 import { PrismaModule } from '@/prisma/prisma.module';
@@ -10,6 +11,7 @@ import { EditUserDto } from '@/user/dto';
 import { UserModule } from '@/user/user.module';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import { Test } from '@nestjs/testing';
 import * as pactum from 'pactum';
 
@@ -27,7 +29,14 @@ describe('App e2e', () => {
         PrismaModule,
       ],
       controllers: [AppController],
-      providers: [AppService],
+      providers: [
+        AppService,
+        {
+          provide: APP_GUARD,
+          useExisting: JwtAccessTokenGuard,
+        },
+        JwtAccessTokenGuard,
+      ],
     }).compile();
 
     // init app
@@ -61,7 +70,7 @@ describe('App e2e', () => {
           .post('/auth/signup')
           .withBody(dto)
           .expectStatus(201);
-        // .inspect(); can show content of response
+        // .inspect(); // can show content of response
       });
       it('400 if email empty', () => {
         return pactum
@@ -92,7 +101,8 @@ describe('App e2e', () => {
           .post('/auth/login')
           .withBody(dto)
           .expectStatus(200)
-          .stores('userAccessToken', 'access_token');
+          .stores('userAccessToken', 'access_token')
+          .stores('userRefreshToken', 'refresh_token');
       });
       it('400 if email empty', () => {
         return pactum
