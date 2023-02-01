@@ -39,7 +39,7 @@ export class AuthController {
   }
 
   /* POST: /auth/logout */
-  // @UseGuards(JwtAccessTokenGuard) // this is set as global in main.ts
+  // @UseGuards(JwtAccessTokenGuard) // this is set as a provider in app.module to work like globally
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   logout(@GetUser('sub') userId: number) {
@@ -47,6 +47,7 @@ export class AuthController {
   }
 
   /* POST: /auth/refresh */
+  @Public()
   @UseGuards(JwtRefreshTokenGuard)
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
