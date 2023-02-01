@@ -15,8 +15,6 @@ export class JwtAccessTokenGuard extends AuthGuard('jwt') {
   canActivate(
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
-    console.log(context.getHandler().name);
-    console.log(context.getClass());
     /* extracting the metadata for the currently processed route handler and controller level */
     const isPublic = this.reflector.getAllAndOverride('isPublic', [
       context.getHandler(),
